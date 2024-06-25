@@ -1,0 +1,7 @@
+path: C:\Users\GG\Desktop\check_point\data
+train: images
+val: images
+
+#Calss
+names:
+  0: reg

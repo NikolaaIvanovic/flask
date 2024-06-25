@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Upload i Obradi slike</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload i Obradi slike</h1>
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" id="file">
+            <button type="submit">Upload</button>
+        </form>
+        {% if filename %}
+        <div class="image-pair">
+            <div class="image-container">
+                <img id="uploadedImage" src="{{ url_for('static', filename='uploaded_images/' ~ filename) }}" alt="Uploaded Image" onclick="showModal(this)">
+            </div>
+            <div id="resultContainer" style="display: none;">
+                <div class="image-container">
+                    <img id="processedImage" src="" alt="Processed Image" onclick="showModal(this)">
+                </div>
+            </div>
+        </div>
+        <form id="processForm" action="/process" method="post">
+            <input type="hidden" name="filename" value="{{ filename }}">
+            <button type="submit">Obradi</button>
+            <button type="button" id="resetButton" style="display: none;">Reset</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Da mozes da otvoris sliku -->
+    <div id="imageModal" class="modal" onclick="hideModal()">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        document.getElementById('processForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Obradjuje se...',
+                html: '<div class="progress-bar"><div class="progress"></div></div>',
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                showConfirmButton: false,
+                allowOutsideClick: false
+            });
+
+            var formData = new FormData(this);
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/process', true);
+            xhr.onload = function () {
+                Swal.close();
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.processed_image_url) {
+                        document.getElementById('processedImage').src = response.processed_image_url;
+                        document.getElementById('resultContainer').style.display = 'block';
+                        document.getElementById('resetButton').style.display = 'inline-block';  /* Show reset button */
+                    } else if (response.error) {
+                        Swal.fire('Error', response.error, 'error');
+                    }
+                }
+            };
+            xhr.send(formData);
+        });
+        /* resetuj */
+        document.getElementById('resetButton').addEventListener('click', function() {
+            window.location.reload();
+        });
+
+        function showModal(img) {
+            var modal = document.getElementById("imageModal");
+            var modalImg = document.getElementById("modalImage");
+            modal.style.display = "block";
+            modalImg.src = img.src;
+        }
+
+        function hideModal() {
+            var modal = document.getElementById("imageModal");
+            modal.style.display = "none";
+        }
+    </script>
+</body>
+</html>
